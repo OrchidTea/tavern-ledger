@@ -67,6 +67,7 @@ function chatIdentity(c) {
 }
 
 function installCollector() {
+    let endedRun = null;
     const c = context(), on = (name, fn) => { if (c.eventTypes[name]) c.eventSource.on(c.eventTypes[name], fn); };
     document.addEventListener('click', event => {
         if (event.target instanceof Element && event.target.closest('#test_api_button')
@@ -93,16 +94,23 @@ function installCollector() {
     observeMessages();
     on('GENERATION_STARTED', (type, _options, dryRun) => {
         if (dryRun) return;
+        endedRun = null;
         run = { kind: type === 'continue' ? 'continue' : type === 'swipe' ? 'swipe' : type === 'quiet' ? 'quiet' : 'normal',
             chat: context().chat, identity: chatIdentity(context()), records: [] };
     });
-    on('GENERATION_ENDED', () => { run = null; });
+    on('GENERATION_ENDED', () => {
+        // ST can unlock its UI before emitting MESSAGE_RECEIVED for a stream.
+        if (run) endedRun = { active: run, expires: Date.now() + 30000 };
+        run = null;
+    });
     on('MESSAGE_RECEIVED', async (index, type) => {
-        const active = run, c = context();
+        const active = run || (endedRun?.expires > Date.now() ? endedRun.active : null), c = context();
         if (!active || active.chat !== c.chat || active.kind === 'quiet' || type === 'first_message') return;
+        if (active.identity.chat_id !== chatIdentity(c).chat_id) return;
         const records = active.records.filter(r => !r.message_id);
         const message = c.chat[index];
         if (!message || message.is_user || !records.length) return;
+        endedRun = null;
         message.tavern_ledger_id ||= uuid();
         message.extra ||= {};
         const previous = message.extra[NAME];
@@ -124,6 +132,7 @@ function installCollector() {
     });
     for (const event of ['CHARACTER_MESSAGE_RENDERED', 'MESSAGE_SWIPED', 'MESSAGE_DELETED', 'CHAT_CHANGED']) {
         on(event, () => {
+            if (event === 'CHAT_CHANGED') { endedRun = null; run = null; }
             observeMessages(event === 'MESSAGE_DELETED');
             paintBadges(); render();
             if (event === 'CHAT_CHANGED') void refresh();
@@ -340,7 +349,7 @@ function renderList(list) {
     listPage = pagination.page;
     if (!filtered.length) list.append(node('p', 'tl-muted', t('empty')));
     for (const r of pagination.rows) {
-        const item = node('details', 'tl-row'), heading = node('summary', '');
+        const item = node('details', 'tl-row'), heading = node('summary', ''), body = node('div', 'tl-row-body');
         item.open = expandedRows.has(r.id);
         item.addEventListener('toggle', () => {
             if (!item.isConnected) return;
@@ -351,16 +360,17 @@ function renderList(list) {
         if (r.kind !== 'connectionTest') identity.append(node('small', 'tl-muted',
             `${r.message_id ? `${t('reply')} #${r.reply_number} · ${t('candidate')} ${(r.swipe_index ?? 0) + 1}` : t('unlinked')} · ${t(r.kind)}`));
         heading.append(identity, node('strong', '', usd(r.cost)));
-        item.append(heading, node('div', 'tl-muted', `${new Date(r.timestamp).toLocaleString(lang)} · ${t(r.provider || 'openrouter')} · ${r.model || '—'}`),
+        item.append(heading, body);
+        body.append(node('div', 'tl-muted', `${new Date(r.timestamp).toLocaleString(lang)} · ${t(r.provider || 'openrouter')} · ${r.model || '—'}`),
             node('div', '', t(r.status)),
             node('div', '', `${tokenSummary(r)} · ${t(r.cost_source)}`));
-        if (r.kind === 'connectionTest') item.append(node('small', 'tl-muted', t(r.status === 'failed' && r.cost == null ? 'connectionTestFailedHelp' : 'connectionTestHelp')));
-        else if (!r.message_id) item.append(node('small', 'tl-muted', t('unlinkedHelp')));
-        if (r.status === 'interrupted') item.append(node('small', 'tl-muted', t('interruptedHelp')));
+        if (r.kind === 'connectionTest') body.append(node('small', 'tl-muted', t(r.status === 'failed' && r.cost == null ? 'connectionTestFailedHelp' : 'connectionTestHelp')));
+        else if (!r.message_id) body.append(node('small', 'tl-muted', t('unlinkedHelp')));
+        if (r.status === 'interrupted') body.append(node('small', 'tl-muted', t('interruptedHelp')));
         const actions = node('div', 'tl-actions');
         if (r.message_id && !r.message_deleted) actions.append(button(t('locate'), () => locate(r)));
-        if (r.cost === null && r.kind !== 'connectionTest') item.append(node('small', 'tl-muted', t('costLimit')));
-        item.append(actions); list.append(item);
+        if (r.cost === null && r.kind !== 'connectionTest') body.append(node('small', 'tl-muted', t('costLimit')));
+        body.append(actions); list.append(item);
     }
     if (pagination.pages > 1) {
         const nav = node('nav', 'tl-pagination');

@@ -25,7 +25,9 @@ async function generate(kind, stream = true) {
  if (kind === 'normal' || !m) { m = { mes:'夜色落在酒館的窗沿。Ghost 抬起頭：「你好，旅人。」', extra:{}, swipe_id:0, swipe_info:[{extra:{}}] }; ctx.chat.push(m); }
  else if (kind === 'continue') m.mes += ' 他將一杯溫熱的茶推到你面前。';
  else { m.swipe_id++; m.swipe_info.push({extra:{}}); m.mes='Ghost 微微頷首：「今晚想聽什麼故事？」'; }
- await emit('MESSAGE_RECEIVED', ctx.chat.length - 1, kind); paint(); await emit('CHARACTER_MESSAGE_RENDERED'); await emit('GENERATION_ENDED');
+ if (stream) await emit('GENERATION_ENDED');
+ await emit('MESSAGE_RECEIVED', ctx.chat.length - 1, kind); paint(); await emit('CHARACTER_MESSAGE_RENDERED');
+ if (!stream) await emit('GENERATION_ENDED');
 }
 for (const kind of ['normal','continue','swipe']) document.getElementById(kind).onclick = () => generate(kind);
 document.getElementById('nonstream').onclick = () => generate('normal', false);

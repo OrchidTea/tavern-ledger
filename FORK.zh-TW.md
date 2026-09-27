@@ -4,6 +4,17 @@
 
 ## 修正範圍
 
+### 1.0.1：串流費用、回覆關聯與明細排版
+
+- SillyTavern 轉送串流可能不保留 `text/event-stream` 標頭；改由回應內容判斷 SSE／JSON，讀取 OpenRouter 回傳的逐筆費用和 tokens。收到 `[DONE]` 即完成觀察，不等待連線關閉。
+- 相容串流先觸發 `GENERATION_ENDED`、再觸發 `MESSAGE_RECEIVED` 的順序；短暫保留同一聊天室的生成關聯，新生成或切換聊天室時清除。
+- 限定帳本明細的標題與內文排版，避免酒館主題的 details／summary 樣式造成重疊；收合時明確隱藏內文。
+- 保留 HTTP UUID 修正、既有帳本、MIT 授權與作者署名。未取得的歷史費用仍顯示待確認；本更新不會估算或憑空回填。
+
+驗證：33 項 Node 測試通過；Chrome 模擬酒館測試通過，涵蓋缺少 SSE 標頭、生成結束先於回覆事件、續寫、重抽、非串流，以及桌面／手機寬度下的主題樣式衝突。未使用付費 API，也尚未在使用者 NAS 的實際版本驗證。
+
+### 1.0.0：HTTP UUID 相容性
+
 將 index.js 三處直接呼叫 crypto.randomUUID() 改為共用 UUID helper：原生 randomUUID → getRandomValues 產生 UUID v4 → 無 Web Crypto 時的一般隨機 UUID 備援。最後一層只適用於帳本識別碼，不用於密碼或安全憑證。不修改瀏覽器全域 crypto，也不依賴 SillyTavern 內部工具的相對路徑。
 
 此修正避免 LAN / Tailscale HTTP 缺少 randomUUID 時，插件在送出 /api/backends/chat-completions/generate 前拋出例外，以及回覆／候選訊息無法建立識別碼。

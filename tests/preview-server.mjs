@@ -34,7 +34,8 @@ http.createServer(async (req, res) => {
             if (url.pathname.endsWith('/generate')) {
                 const data = { id: crypto.randomUUID(), usage: { cost: .0372, prompt_tokens: 8432, completion_tokens: 1054 } };
                 if (!b.stream) return res.end(JSON.stringify(data));
-                res.setHeader('content-type', 'text/event-stream');
+                // ST proxies can omit the upstream SSE content type.
+                res.removeHeader('content-type');
                 res.write(`data: ${JSON.stringify({ id: data.id, choices: [{ delta: { content: '你好，旅人。' } }] })}\n\n`);
                 setTimeout(() => res.end(`data: ${JSON.stringify(data)}\n\ndata: [DONE]\n\n`), 80); return;
             }

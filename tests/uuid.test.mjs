@@ -26,7 +26,7 @@ test('preserves native Crypto receiver', () => {
     assert.equal(sandbox.uuid(), 'native-id');
 });
 
-test('HTTP collector forwards generation and links message/candidate IDs', async () => {
+for (const endedFirst of [false, true]) test(`HTTP collector links messages and continuations (ended first: ${endedFirst})`, async () => {
     const index = await readFile(new URL('../index.js', import.meta.url), 'utf8');
     const collector = index.slice(index.indexOf('function installCollector()'), index.indexOf('\nasync function refresh()'));
     const handlers = {};
@@ -50,6 +50,7 @@ test('HTTP collector forwards generation and links message/candidate IDs', async
     assert.equal(calls.length, 1);
     assert.equal(calls[0][0], url);
     assert.equal(calls[0][1], options);
+    if (endedFirst) handlers.GENERATION_ENDED();
     await handlers.MESSAGE_RECEIVED(0);
     assert.match(records[0].id, pattern);
     assert.match(chat[0].tavern_ledger_id, pattern);
@@ -58,6 +59,7 @@ test('HTTP collector forwards generation and links message/candidate IDs', async
     const oldMessage = chat[0].tavern_ledger_id, oldCandidate = chat[0].extra.tavern_ledger.candidate_id;
     handlers.GENERATION_STARTED('continue');
     await sandbox.window.fetch(url, options);
+    if (endedFirst) handlers.GENERATION_ENDED();
     await handlers.MESSAGE_RECEIVED(0);
     assert.equal(chat[0].tavern_ledger_id, oldMessage);
     assert.equal(chat[0].extra.tavern_ledger.candidate_id, oldCandidate);

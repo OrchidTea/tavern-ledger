@@ -30,6 +30,15 @@
 .tl-row summary { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; cursor: pointer; padding: 6px 0; }
 .tl-row summary strong { color: #e1c68c; white-space: nowrap; }
 .tl-row .tl-actions { margin-top: 10px; }
+/* Keep host/theme details rules from positioning the heading over its body. */
+.tl-dialog details.tl-row { display: block; position: static; height: auto; min-height: 0; max-height: none; line-height: 1.5; text-align: left; }
+.tl-dialog details.tl-row > summary { position: static; display: flex; width: 100%; height: auto; min-height: 0; max-height: none; margin: 0; float: none; transform: none; box-sizing: border-box; white-space: normal; line-height: 1.5; }
+.tl-dialog .tl-row > summary::before, .tl-dialog .tl-row > summary::after { content: none; }
+.tl-dialog .tl-row .tl-identity { display: grid; position: static; height: auto; line-height: 1.5; overflow-wrap: anywhere; }
+.tl-dialog .tl-row .tl-identity small { display: block; position: static; height: auto; }
+.tl-dialog .tl-row > .tl-row-body { display: grid; position: static; gap: 8px; margin-top: 10px; height: auto; line-height: 1.5; overflow-wrap: anywhere; }
+.tl-dialog .tl-row > .tl-row-body > * { position: static; height: auto; margin: 0; white-space: normal; }
+.tl-dialog .tl-row:not([open]) > .tl-row-body { display: none !important; }
 .tl-pagination { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px; padding: 16px 0 4px; }
 .tl-pagination .tl-button:disabled { opacity: .4; cursor: default; }
 .tl-badge { font-size: 12px; opacity: .85; margin-top: 12px; padding: 8px; border-top: 1px solid var(--SmartThemeBorderColor, #777); }

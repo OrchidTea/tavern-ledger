@@ -23,6 +23,45 @@ test('non-stream JSON and zero-cost generations remain official; unknown never b
     assert.equal(usageFrom(data).cost_source, 'provider');
     assert.equal(usageFrom({ usage: {} }).cost, null);
 });
+for (const contentType of [null, 'text/plain', 'application/octet-stream']) {
+    test(`ST forwarded SSE retains cost without SSE header (${contentType})`, async () => {
+        const payload = ': keepalive\r\n\r\ndata: {"id":"gen-st","usage":{"cost":0.0042,"prompt_tokens":70,"completion_tokens":11}}\r\n\r\ndata: [DONE]\r\n\r\n';
+        const bytes = new TextEncoder().encode(payload);
+        const stream = new ReadableStream({ start(c) { for (const byte of bytes) c.enqueue(new Uint8Array([byte])); c.close(); } });
+        const frames = [];
+        await readUsage(new Response(stream, { headers: contentType ? { 'content-type': contentType } : {} }), x => frames.push(x));
+        assert.equal(frames[0].id, 'gen-st');
+        assert.equal(usageFrom(frames[0]).cost, .0042);
+        assert.equal(usageFrom(frames[0]).output_tokens, 11);
+    });
+}
+test('DONE completes observation without waiting for HTTP EOF', async () => {
+    let cancelled = false;
+    const stream = new ReadableStream({
+        start(c) { c.enqueue(new TextEncoder().encode('data: {"usage":{"cost":0.01}}\n\ndata: [DONE]\n\n')); },
+        cancel() { cancelled = true; },
+    });
+    const frames = [];
+    await readUsage(new Response(stream), x => frames.push(x));
+    assert.equal(frames[0].usage.cost, .01);
+    assert.equal(cancelled, true);
+});
+test('JSON without a content type is still parsed, including JSON error responses', async () => {
+    let data;
+    await readUsage(new Response(new TextEncoder().encode(' {"error":{"message":"test"}}')), x => { data = x; });
+    assert.equal(data.error.message, 'test');
+});
+test('interrupted stream preserves earlier generation ID and rejects', async () => {
+    let count = 0;
+    const stream = new ReadableStream({ pull(c) {
+        if (!count++) c.enqueue(new TextEncoder().encode('data: {"id":"gen-interrupted"}\n\n'));
+        else c.error(new Error('Disconnected'));
+    } });
+    const frames = [];
+    await assert.rejects(readUsage(new Response(stream), x => frames.push(x)), /Disconnected/);
+    assert.equal(frames[0].id, 'gen-interrupted');
+    assert.equal(usageFrom(frames[0]).cost, undefined);
+});
 test('account usage snapshots recover charges without accepting invalid differences', () => {
     assert.ok(Math.abs(costFromSnapshots({ total_used: 10 }, { total_used: 10.025 }) - .025) < 1e-12);
     assert.equal(costFromSnapshots({ total_used: 10 }, { total_used: 9 }), null);
