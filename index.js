@@ -3,6 +3,7 @@ import { locales } from './locales.mjs';
 import { STFileLedger } from './lib/st-storage.mjs';
 import { readImportFile } from './lib/import.mjs';
 import { exportLedgerXlsx } from './lib/xlsx-export.mjs';
+import { uuid } from './lib/uuid.mjs';
 
 const NAME = 'tavern_ledger';
 const SUPPORTED_PROVIDERS = new Set(['openrouter']);
@@ -102,10 +103,10 @@ function installCollector() {
         const records = active.records.filter(r => !r.message_id);
         const message = c.chat[index];
         if (!message || message.is_user || !records.length) return;
-        message.tavern_ledger_id ||= crypto.randomUUID();
+        message.tavern_ledger_id ||= uuid();
         message.extra ||= {};
         const previous = message.extra[NAME];
-        const candidateId = active.kind === 'continue' && previous?.candidate_id ? previous.candidate_id : crypto.randomUUID();
+        const candidateId = active.kind === 'continue' && previous?.candidate_id ? previous.candidate_id : uuid();
         message.extra[NAME] = { candidate_id: candidateId };
         if (message.swipe_info?.[message.swipe_id]) {
             message.swipe_info[message.swipe_id].extra ||= {};
@@ -146,7 +147,7 @@ function installCollector() {
             : active?.identity || chatIdentity(context());
         const isolated = liveRequests.size === 0;
         const before = isolated ? await api('/snapshot', {}).catch(() => null) : null;
-        const row = { id: crypto.randomUUID(), provider, model: body.model, secret_id: typeof body.secret_id === 'string' ? body.secret_id : null,
+        const row = { id: uuid(), provider, model: body.model, secret_id: typeof body.secret_id === 'string' ? body.secret_id : null,
             ...identity, kind: connectionTest ? 'connectionTest' : active?.kind || 'quiet', timestamp: new Date().toISOString(), schema_version: 2,
             cost: null, input_tokens: null, output_tokens: null, currency: 'USD', cost_source: 'unknown', status: 'pending', isolated };
         void persist(row);

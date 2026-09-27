@@ -1,3 +1,5 @@
+> OrchidTea personal fork: LAN / Tailscale HTTP UUID compatibility fix. Upstream: [ha810505ha/tavern-ledger](https://github.com/ha810505ha/tavern-ledger). 安裝、資料相容性與同步方式：[自用修正版說明](FORK.zh-TW.md).
+
 # Tavern Ledger · 酒館帳本 v1.0.0
 
 [English](README.md) | 繁體中文
@@ -28,7 +30,7 @@ SillyTavern 的 OpenRouter 費用帳本，支援繁體中文與 English。
 在 SillyTavern 開啟「**擴充功能 → 安裝擴充功能**」，貼上：
 
 ```text
-https://github.com/ha810505ha/tavern-ledger
+https://github.com/OrchidTea/tavern-ledger
 ```
 
 安裝完成後重新整理頁面。
@@ -39,7 +41,7 @@ https://github.com/ha810505ha/tavern-ledger
 
 ```bash
 cd public/scripts/extensions/third-party
-git clone https://github.com/ha810505ha/tavern-ledger.git
+git clone https://github.com/OrchidTea/tavern-ledger.git
 ```
 
 完成後重新整理 SillyTavern。
@@ -119,7 +121,7 @@ OpenRouter 的扣款資訊可能延遲。擴充會在回應完成後查詢，約
 
 ## 問題回報
 
-請至 [GitHub Issues](https://github.com/ha810505ha/tavern-ledger/issues) 回報，並附上：
+請至 [GitHub Issues](https://github.com/OrchidTea/tavern-ledger/issues) 回報，並附上：
 
 - SillyTavern 版本
 - 瀏覽器與裝置

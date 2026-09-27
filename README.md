@@ -1,3 +1,5 @@
+> OrchidTea personal fork: LAN / Tailscale HTTP UUID compatibility fix. Upstream: [ha810505ha/tavern-ledger](https://github.com/ha810505ha/tavern-ledger). 安裝、資料相容性與同步方式：[自用修正版說明](FORK.zh-TW.md).
+
 # Tavern Ledger v1.0.0
 
 English | [繁體中文](README.zh-TW.md)
@@ -28,7 +30,7 @@ These are real interface screenshots in Traditional Chinese. Amounts and records
 In SillyTavern, open **Extensions → Install extension** and paste:
 
 ```text
-https://github.com/ha810505ha/tavern-ledger
+https://github.com/OrchidTea/tavern-ledger
 ```
 
 Refresh the page after installation.
@@ -39,7 +41,7 @@ If the built-in installer is unavailable, run this from the SillyTavern director
 
 ```bash
 cd public/scripts/extensions/third-party
-git clone https://github.com/ha810505ha/tavern-ledger.git
+git clone https://github.com/OrchidTea/tavern-ledger.git
 ```
 
 Refresh SillyTavern when the clone finishes.
@@ -118,7 +120,7 @@ Make sure the deployment persists SillyTavern's user data directory. The ledger 
 
 ## Reporting issues
 
-Report problems through [GitHub Issues](https://github.com/ha810505ha/tavern-ledger/issues) and include:
+Report problems through [GitHub Issues](https://github.com/OrchidTea/tavern-ledger/issues) and include:
 
 - SillyTavern version
 - Browser and device
